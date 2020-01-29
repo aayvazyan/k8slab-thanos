@@ -1,0 +1,189 @@
+kind: ClusterProvisioner
+apiVersion: konvoy.mesosphere.io/v1beta1
+metadata:
+  name: k8slab
+  creationTimestamp: "2020-01-11T18:18:21Z"
+spec:
+  provider: aws
+  aws:
+    region: us-west-2
+    vpc:
+      enableInternetGateway: true
+      enableVPCEndpoints: true
+    availabilityZones:
+    - us-west-2c
+    tags:
+      owner: tigran
+  nodePools:
+  - name: worker
+    count: 4
+    machine:
+      rootVolumeSize: 80
+      rootVolumeType: gp2
+      imagefsVolumeEnabled: true
+      imagefsVolumeSize: 160
+      imagefsVolumeType: gp2
+      imagefsVolumeDevice: xvdb
+      type: m5.2xlarge
+  - name: control-plane
+    controlPlane: true
+    count: 3
+    machine:
+      rootVolumeSize: 80
+      rootVolumeType: io1
+      rootVolumeIOPS: 1000
+      imagefsVolumeEnabled: true
+      imagefsVolumeSize: 160
+      imagefsVolumeType: gp2
+      imagefsVolumeDevice: xvdb
+      type: m5.xlarge
+  - name: bastion
+    bastion: true
+    count: 0
+    machine:
+      rootVolumeSize: 10
+      rootVolumeType: gp2
+      imagefsVolumeEnabled: false
+      type: m5.large
+  sshCredentials:
+    user: centos
+    publicKeyFile: testcluster-ssh.pub
+    privateKeyFile: testcluster-ssh.pem
+  version: v1.3.0-rc.1
+---
+kind: ClusterConfiguration
+apiVersion: konvoy.mesosphere.io/v1beta1
+metadata:
+  name: k8slab
+  creationTimestamp: "2020-01-11T18:18:21Z"
+spec:
+  kubernetes:
+    version: 1.16.4
+    networking:
+      podSubnet: 192.168.0.0/16
+      serviceSubnet: 10.0.0.0/18
+    cloudProvider:
+      provider: aws
+    admissionPlugins:
+      enabled:
+      - AlwaysPullImages
+      - NodeRestriction
+  containerNetworking:
+    calico:
+      version: v3.10.1
+      encapsulation: ipip
+      mtu: 1480
+  containerRuntime:
+    containerd:
+      version: 1.2.6
+  osPackages:
+    enableAdditionalRepositories: true
+  nodePools:
+  - name: worker
+  addons:
+  - configRepository: https://github.com/mesosphere/kubernetes-base-addons
+    configVersion: v1.3.0-rc.1
+    addonsList:
+    - name: awsebscsiprovisioner
+      enabled: true
+    - name: awsebsprovisioner
+      enabled: false
+      values: |
+        storageclass:
+          isDefault: false
+    - name: cert-manager
+      enabled: true
+    - name: dashboard
+      enabled: true
+    - name: defaultstorageclass-protection
+      enabled: true
+    - name: dex
+      enabled: true
+    - name: dex-k8s-authenticator
+      enabled: true
+    - name: dispatch
+      enabled: false
+    - name: elasticsearch
+      enabled: false
+    - name: elasticsearchexporter
+      enabled: false
+    - name: external-dns
+      enabled: true
+      values: |
+        aws:
+          region:
+        domainFilters: []
+    - name: flagger
+      enabled: false
+    - name: fluentbit
+      enabled: true
+    - name: gatekeeper
+      enabled: true
+    - name: istio
+      enabled: false
+    - name: kibana
+      enabled: false
+    - name: kommander
+      enabled: true
+      values: |
+        kommander-thanos:
+          thanos:
+            objstoreSecretOverride: "kommander-kubeaddons-thanos"
+            query:
+              extraArgs:
+              - "--store=prometheus-kubeaddons-prom-prometheus.kubeaddons.svc:10901"
+              - "--store=kommander-kubeaddons-thanos-store-grpc.kommander.svc:10901"
+              - "--query.auto-downsampling"
+              - "--query.partial-response"
+            store:
+              enabled: true
+            image:
+              pullPolicy: IfNotPresent
+              repository: quay.io/thanos/thanos
+              tag: v0.10.0
+    - name: konvoyconfig
+      enabled: true
+    - name: kube-oidc-proxy
+      enabled: true
+    - name: kudo
+      enabled: true
+    - name: localvolumeprovisioner
+      enabled: false
+      values: |
+        # Multiple storage classes can be defined here. This allows to, e.g.,
+        # distinguish between different disk types.
+        # For each entry a storage class '$name' and
+        # a host folder '/mnt/$dirName' will be created. Volumes mounted to this
+        # folder are made available in the storage class.
+        storageclasses:
+          - name: localvolumeprovisioner
+            dirName: disks
+            isDefault: false
+            reclaimPolicy: Delete
+            volumeBindingMode: WaitForFirstConsumer
+    - name: nvidia
+      enabled: false
+    - name: opsportal
+      enabled: true
+    - name: prometheus
+      enabled: true
+      values: |
+        prometheus:
+          prometheusSpec:
+            thanos:
+              baseImage: "quay.io/thanos/thanos"
+              version: "v0.10.0"
+              objectStorageConfig:
+                key: thanos.yaml
+                name: thanos-objstore-config
+    - name: prometheusadapter
+      enabled: true
+    - name: reloader
+      enabled: true
+    - name: traefik
+      enabled: true
+    - name: traefik-forward-auth
+      enabled: true
+    - name: velero
+      enabled: false
+  version: v1.3.0-rc.1
