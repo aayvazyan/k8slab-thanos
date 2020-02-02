@@ -125,23 +125,6 @@ spec:
       enabled: false
     - name: kommander
       enabled: false
-      values: |
-        kommander-thanos:
-          thanos:
-            objstoreSecretOverride: "kommander-kubeaddons-thanos"
-            query:
-              enabled: false
-              extraArgs:
-              - "--store=prometheus-kubeaddons-prom-prometheus.kubeaddons.svc:10901"
-              - "--store=kommander-kubeaddons-thanos-store-grpc.kommander.svc:10901"
-              - "--query.auto-downsampling"
-              - "--query.partial-response"
-            store:
-              enabled: true
-            image:
-              pullPolicy: IfNotPresent
-              repository: quay.io/thanos/thanos
-              tag: v0.10.0
     - name: konvoyconfig
       enabled: true
     - name: kube-oidc-proxy
