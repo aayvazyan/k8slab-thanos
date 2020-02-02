@@ -81,7 +81,7 @@ spec:
   nodePools:
   - name: worker
   addons:
-  - configRepository: https://github.com/mesosphere/kubernetes-base-addons
+  - configRepository: https://github.com/tpetrosyan/kubernetes-base-addons
     configVersion: v1.3.0-rc.1
     addonsList:
     - name: awsebscsiprovisioner
@@ -116,7 +116,7 @@ spec:
     - name: flagger
       enabled: false
     - name: fluentbit
-      enabled: true
+      enabled: false
     - name: gatekeeper
       enabled: true
     - name: istio
@@ -124,12 +124,13 @@ spec:
     - name: kibana
       enabled: false
     - name: kommander
-      enabled: true
+      enabled: false
       values: |
         kommander-thanos:
           thanos:
             objstoreSecretOverride: "kommander-kubeaddons-thanos"
             query:
+              enabled: false
               extraArgs:
               - "--store=prometheus-kubeaddons-prom-prometheus.kubeaddons.svc:10901"
               - "--store=kommander-kubeaddons-thanos-store-grpc.kommander.svc:10901"
@@ -174,10 +175,24 @@ spec:
               baseImage: "quay.io/thanos/thanos"
               version: "v0.10.0"
               objectStorageConfig:
-                key: thanos.yaml
+                key: object-store.yaml
                 name: thanos-objstore-config
     - name: prometheusadapter
       enabled: true
+    - name: k8slab-thanos
+      enabled: true
+      values: |
+        objstoreSecretOverride: "thanos-objstore-config"
+        query:
+          extraArgs:
+            - "--store=prometheus-kubeaddons-prom-prometheus.kubeaddons.svc:10901"
+            - "--store=k8slab-thanos-kubeaddons-store-grpc.kubeaddons.svc:10901"
+            - "--query.auto-downsampling"
+            - "--query.partial-response"
+        store:
+          enabled: true
+    - name: k8slab-fluentbit
+      enabled: false
     - name: reloader
       enabled: true
     - name: traefik
