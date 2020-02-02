@@ -5,7 +5,7 @@ metadata:
   namespace: kubeaddons
 type: Opaque
 stringData:
-  thanos.yaml: |-
+  object-store.yaml: |-
     type: s3
     config:
       bucket: k8slab-thanos-tig-metrics
