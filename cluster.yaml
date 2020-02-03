@@ -82,7 +82,7 @@ spec:
   - name: worker
   addons:
   - configRepository: https://github.com/tpetrosyan/kubernetes-base-addons
-    configVersion: v1.3.0-rc.1
+    configVersion: tpetrosyan/thanos
     addonsList:
     - name: awsebscsiprovisioner
       enabled: true
@@ -162,7 +162,7 @@ spec:
                 name: thanos-objstore-config
     - name: prometheusadapter
       enabled: true
-    - name: k8slab-thanos
+    - name: thanos
       enabled: true
       values: |
         objstoreSecretOverride: "thanos-objstore-config"
@@ -174,8 +174,6 @@ spec:
             - "--query.partial-response"
         store:
           enabled: true
-    - name: k8slab-fluentbit
-      enabled: false
     - name: reloader
       enabled: true
     - name: traefik
