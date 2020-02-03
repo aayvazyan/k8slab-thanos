@@ -169,7 +169,7 @@ spec:
         query:
           extraArgs:
             - "--store=prometheus-kubeaddons-prom-prometheus.kubeaddons.svc:10901"
-            - "--store=k8slab-thanos-kubeaddons-store-grpc.kubeaddons.svc:10901"
+            - "--store=thanos-kubeaddons-store-grpc.kubeaddons.svc:10901"
             - "--query.auto-downsampling"
             - "--query.partial-response"
         store:
